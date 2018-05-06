@@ -26,7 +26,7 @@ app.get('/page1', function(req, res) {
   res.send('A page')
 })
 
-app.get('/pag%C3%A92', function(req, res) {
+app.get('/pag%C3%A9', function(req, res) {
   res.send('A page with a unicode name')
 })
 
@@ -39,8 +39,7 @@ app.get('/absolute_redirect', function(req, res) {
 })
 
 app.get('/absolute_redirect_unicode', function(req, res) {
-  // http://localhost:3000/pagé2
-  res.redirect('http://localhost:3000/pagé2')
+  res.redirect('http://localhost:3000/pagé')
 })
 
 app.get('/google', function(req, res) {
