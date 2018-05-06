@@ -71,7 +71,8 @@ const request = (url, opts) => {
 
       // handle redirection requests
       if (status === 3 && 'location' in response.headers) {
-        let location = urlParse.parse(response.headers['location'])
+        let origin = `${ctx.opts.protocol}//${ctx.opts.host}`
+        let location = new urlParse.URL(response.headers['location'], origin)
 
         if (opts.headers && ctx.opts.hostname !== location.hostname) {
           delete opts.headers.Authorization
