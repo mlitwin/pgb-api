@@ -40,7 +40,7 @@ app.get('/absolute_redirect', function(req, res) {
 
 app.get('/absolute_redirect_unicode', function(req, res) {
   // http://localhost:3000/pagé2
-  res.redirect('http://localhost:3000/pag%C3%A92')
+  res.redirect('http://localhost:3000/pagé2')
 })
 
 app.get('/google', function(req, res) {
