@@ -40,6 +40,24 @@ const emit = (ctx, event, payload) => {
 }
 
 /**
+ * extract the location object from the location header value
+ * Several issues around handling of utf8 to worry about, e.g. when
+ * phonegap API returns a redirect to an iOS build named with mon-vanilla characters:
+ *
+ * 1) The location header from node might not be interpreted as utf8: https://github.com/nodejs/node/issues/17390
+ * 2) The location object created from the legacy API (https://nodejs.org/api/url.html#url_legacy_url_api)
+ *    does not correctlyu percent escape utf8. The WHATWG API (https://nodejs.org/api/url.html#url_the_whatwg_url_api)
+ *    does, however.
+ */
+
+const getLocationFromHeaderValue = (ctx, locationValue) => {
+  let origin = `${ctx.opts.protocol}//${ctx.opts.host}`
+  let unicodeLocation = Buffer.from(locationValue, 'binary').toString('utf8')
+
+  return new urlParse.URL(unicodeLocation, origin)
+}
+
+/**
  * do the request
  */
 const request = (url, opts) => {
@@ -71,7 +89,7 @@ const request = (url, opts) => {
 
       // handle redirection requests
       if (status === 3 && 'location' in response.headers) {
-        let location = urlParse.parse(response.headers['location'])
+        let location = getLocationFromHeaderValue(ctx, response.headers['location'])
 
         if (opts.headers && ctx.opts.hostname !== location.hostname) {
           delete opts.headers.Authorization
