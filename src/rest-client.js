@@ -74,6 +74,8 @@ const request = (url, opts) => {
         let origin = `${ctx.opts.protocol}//${ctx.opts.host}`
         let location = new urlParse.URL(response.headers['location'], origin)
 
+        console.log(`Redirecting to: ${location.href}`)
+
         if (opts.headers && ctx.opts.hostname !== location.hostname) {
           delete opts.headers.Authorization
         }
