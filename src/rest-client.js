@@ -72,7 +72,8 @@ const request = (url, opts) => {
       // handle redirection requests
       if (status === 3 && 'location' in response.headers) {
         let origin = `${ctx.opts.protocol}//${ctx.opts.host}`
-        let location = new urlParse.URL(response.headers['location'], origin)
+        let unicodeLocation = Buffer.from(response.headers['location'], 'binary').toString('utf8')
+        let location = new urlParse.URL(unicodeLocation, origin)
 
         console.log(`Redirecting to: ${response.headers['location']}`)
         console.log(JSON.stringify(location, null, 2))
