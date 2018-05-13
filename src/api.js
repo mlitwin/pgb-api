@@ -305,6 +305,90 @@ class PGBApi {
     }
     return this
   }
+
+  /*
+   *  Poll via getStatus for completed platform builds, and download them via downloadApp.
+   *  @param {string} id - phonegab build application identifier.
+   *  @param {object} saves - map: platform -> save, where save is passed to downloadApp when downloading platform.
+   *  @return {Promise} - Thenable that executes the poll and download.
+   */
+  awaitAndDownloadApps(id, saves) {
+    const pollingIntervalMs = 1000
+
+    let state = {
+      allBuildsFinished: false,
+      downloadStarted: {},
+      activeDownloads: 0,
+      downloadHadError: false,
+      returns: {},
+      errors: {}
+    }
+
+    const emit = (evt, data) => {
+      if (this.defaults.events && this.defaults.events.emit) {
+        this.defaults.events.emit(evt, data)
+      }
+    }
+
+    let pollAndDownload = (resolve, reject) => {
+      let pollOnce = () => {
+        this.getStatus(id).then((result) => {
+          emit('downloads/status', result)
+          let status = result.status
+          for (let platform in status) {
+            // The first time we see a complete build, start to download it.
+            if (!state.downloadStarted[platform] && status[platform] === 'complete') {
+              const downloadPlatform = platform // closure
+              emit('downloads/starting', downloadPlatform)
+
+              state.downloadStarted[downloadPlatform] = true
+              state.activeDownloads++
+
+              this.downloadApp(id, downloadPlatform, saves && saves[downloadPlatform]).then((ret) => {
+                state.returns[downloadPlatform] = ret
+                emit('downloads/succeeded', {
+                  'platform': downloadPlatform,
+                  'return': ret
+                })
+              }).catch((err) => {
+                state.downloadHadError = true
+                state.errors[downloadPlatform] = err
+                emit('downloads/failed', {
+                  'platform': downloadPlatform,
+                  'error': err
+                })
+              }).finally(() => {
+                state.activeDownloads--
+                // Last download to complete resolves or rejects the promise.
+                if (state.allBuildsFinished && state.activeDownloads === 0) {
+                  if (state.downloadHadError) {
+                    reject({
+                      'returns': state.returns, // successful downloads
+                      'errors': state.errors // unsuccessful downloads
+                    })
+                  } else {
+                    resolve(state.returns)
+                  }
+                }
+              })
+            }
+          }
+
+          if (result.completed) {
+            // Raise flag for completed downloads to pick up
+            state.allBuildsFinished = true
+          } else {
+            // try again
+            setTimeout(pollOnce, pollingIntervalMs)
+          }
+        })
+      }
+
+      pollOnce()
+    }
+
+    return new Promise(pollAndDownload)
+  };
 }
 
 module.exports = (opts) => new PGBApi(opts)
