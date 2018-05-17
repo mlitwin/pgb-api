@@ -487,7 +487,17 @@ describe('api', () => {
         'android'
       )
       api.awaitAndDownloadApps(12, {}).then((val) => {
-        expect(val).toEqual({'android': 'android', 'ios': 'iosdownload'})
+        expect(val).toEqual({
+          'success': {
+            'android': 'android',
+            'ios': 'iosdownload'
+          },
+          'error': {
+            getStatus: null,
+            downloadApp: {},
+            build: {}
+          }
+        })
         done()
       })
     }
@@ -522,12 +532,13 @@ describe('api', () => {
     })
     api.awaitAndDownloadApps(12, {}).catch((val) => {
       expect(val).toEqual({
-        'buildErrors': {
-          'ios': 'ios_failure'
-        },
-        'downloadErrors': {},
-        'returns': {
+        'success': {
           'android': 'android'
+        },
+        'error': {
+          getStatus: null,
+          downloadApp: {},
+          build: {'ios': 'ios_failure'}
         }
       })
       done()
