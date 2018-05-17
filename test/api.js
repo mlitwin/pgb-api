@@ -467,10 +467,10 @@ describe('api', () => {
     test('awaitAndDownloadApps success', (done) => {
       restClient.get.mockResolvedValueOnce({
         'completed': false,
-        'errors': [],
+        'errors': {},
         'status': {
           'ios': 'complete',
-          'andriod': 'not complete?',
+          'android': 'pending',
           'winphone': 'skipped'
         }
       }).mockResolvedValueOnce(
@@ -480,17 +480,57 @@ describe('api', () => {
         'errors': [],
         'status': {
           'ios': 'complete',
-          'andriod': 'complete',
+          'android': 'complete',
           'winphone': 'skipped'
         }
       }).mockResolvedValueOnce(
-        'andriod'
+        'android'
       )
       api.awaitAndDownloadApps(12, {}).then((val) => {
-        expect(val).toEqual({'andriod': 'andriod', 'ios': 'iosdownload'})
+        expect(val).toEqual({'android': 'android', 'ios': 'iosdownload'})
         done()
       })
     }
     )
+  })
+  test('awaitAndDownloadApps build failure', (done) => {
+    let eventEmitter = new (require('events'))()
+    let api = apiClient({events: eventEmitter})
+
+    eventEmitter.on('downloads/waiting', (evt) => {
+      jest.runOnlyPendingTimers()
+    })
+
+    restClient.get.mockResolvedValueOnce({
+      'completed': false,
+      'errors': {},
+      'status': {
+        'ios': 'pending',
+        'android': 'complete',
+        'winphone': 'skipped'
+      }
+    }).mockResolvedValueOnce(
+      'android'
+    ).mockResolvedValueOnce({
+      'completed': true,
+      'error': {'ios': 'ios_failure'},
+      'status': {
+        'ios': 'error',
+        'android': 'complete',
+        'winphone': 'skipped'
+      }
+    })
+    api.awaitAndDownloadApps(12, {}).catch((val) => {
+      expect(val).toEqual({
+        'buildErrors': {
+          'ios': 'ios_failure'
+        },
+        'downloadErrors': {},
+        'returns': {
+          'android': 'android'
+        }
+      })
+      done()
+    })
   })
 })

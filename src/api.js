@@ -317,11 +317,12 @@ class PGBApi {
 
     let state = {
       allBuildsFinished: false,
-      downloadStarted: {},
+      buildFinished: {},
       activeDownloads: 0,
-      downloadHadError: false,
+      errorEncountered: false,
       returns: {},
-      errors: {}
+      downloadErrors: {},
+      buildErrors: {}
     }
 
     const emit = (evt, data) => {
@@ -332,10 +333,11 @@ class PGBApi {
 
     let pollAndDownload = (resolve, reject) => {
       const resolveOrReject = () => {
-        if (state.downloadHadError) {
+        if (state.errorEncountered) {
           reject({
             'returns': state.returns, // successful downloads
-            'errors': state.errors // unsuccessful downloads
+            'buildErrors': state.buildErrors, // errors from a build
+            'downloadErrors': state.downloadErrors // unsuccessful downloads
           })
         } else {
           resolve(state.returns)
@@ -348,11 +350,11 @@ class PGBApi {
           let status = result.status
           for (let platform in status) {
             // The first time we see a complete build, start to download it.
-            if (!state.downloadStarted[platform] && status[platform] === 'complete') {
+            if (!state.buildFinished[platform] && status[platform] === 'complete') {
               const downloadPlatform = platform // closure
               emit('downloads/starting', downloadPlatform)
 
-              state.downloadStarted[downloadPlatform] = true
+              state.buildFinished[downloadPlatform] = true
               state.activeDownloads++
 
               this.downloadApp(id, downloadPlatform, saves && saves[downloadPlatform]).then((ret) => {
@@ -362,8 +364,8 @@ class PGBApi {
                   'return': ret
                 })
               }).catch((err) => {
-                state.downloadHadError = true
-                state.errors[downloadPlatform] = err
+                state.errorEncountered = true
+                state.downloadErrors[downloadPlatform] = err
                 emit('downloads/failed', {
                   'platform': downloadPlatform,
                   'error': err
@@ -375,6 +377,13 @@ class PGBApi {
                   resolveOrReject()
                 }
               })
+            } else if (!state.buildFinished[platform] && status[platform] === 'error') {
+              state.buildFinished[platform] = true
+              state.errorEncountered = true
+              state.buildErrors[platform] = result.error[platform]
+              let errorEvent = {}
+              errorEvent[platform] = result.error[platform]
+              emit('downloads/buildError', errorEvent)
             }
           }
 
