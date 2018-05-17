@@ -331,6 +331,17 @@ class PGBApi {
     }
 
     let pollAndDownload = (resolve, reject) => {
+      const resolveOrReject = () => {
+        if (state.downloadHadError) {
+          reject({
+            'returns': state.returns, // successful downloads
+            'errors': state.errors // unsuccessful downloads
+          })
+        } else {
+          resolve(state.returns)
+        }
+      }
+
       let pollOnce = () => {
         this.getStatus(id).then((result) => {
           emit('downloads/status', result)
@@ -361,14 +372,7 @@ class PGBApi {
                 state.activeDownloads--
                 // Last download to complete resolves or rejects the promise.
                 if (state.allBuildsFinished && state.activeDownloads === 0) {
-                  if (state.downloadHadError) {
-                    reject({
-                      'returns': state.returns, // successful downloads
-                      'errors': state.errors // unsuccessful downloads
-                    })
-                  } else {
-                    resolve(state.returns)
-                  }
+                  resolveOrReject()
                 }
               })
             }
@@ -379,9 +383,10 @@ class PGBApi {
             state.allBuildsFinished = true
           } else {
             // try again
-            setTimeout(pollOnce, pollingIntervalMs)
+            const timeoutID = setTimeout(pollOnce, pollingIntervalMs)
+            emit('downloads/waiting', {'timeoutID': timeoutID})
           }
-        })
+        }).catch(console.error)
       }
 
       pollOnce()

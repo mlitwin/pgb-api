@@ -455,4 +455,42 @@ describe('api', () => {
       expect(api.defaults.headers).toEqual({})
     })
   })
+
+  describe('downloads', () => {
+    let eventEmitter = new (require('events'))()
+    let api = apiClient({events: eventEmitter})
+
+    eventEmitter.on('downloads/waiting', (evt) => {
+      jest.runOnlyPendingTimers()
+    })
+
+    test('awaitAndDownloadApps success', (done) => {
+      restClient.get.mockResolvedValueOnce({
+        'completed': false,
+        'errors': [],
+        'status': {
+          'ios': 'complete',
+          'andriod': 'not complete?',
+          'winphone': 'skipped'
+        }
+      }).mockResolvedValueOnce(
+        'iosdownload'
+      ).mockResolvedValueOnce({
+        'completed': true,
+        'errors': [],
+        'status': {
+          'ios': 'complete',
+          'andriod': 'complete',
+          'winphone': 'skipped'
+        }
+      }).mockResolvedValueOnce(
+        'andriod'
+      )
+      api.awaitAndDownloadApps(12, {}).then((val) => {
+        expect(val).toEqual({'andriod': 'andriod', 'ios': 'iosdownload'})
+        done()
+      })
+    }
+    )
+  })
 })
