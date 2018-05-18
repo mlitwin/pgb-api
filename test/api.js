@@ -585,4 +585,29 @@ describe('api', () => {
       done()
     })
   })
+
+  test('awaitAndDownloadApps status failure', (done) => {
+    let eventEmitter = new (require('events'))()
+    let api = apiClient({events: eventEmitter})
+
+    eventEmitter.on('downloads/waiting', (evt) => {
+      jest.runOnlyPendingTimers()
+    })
+
+    restClient.get.mockRejectedValueOnce(
+      'some problem with status'
+    )
+    api.awaitAndDownloadApps(12, {}).catch((val) => {
+      expect(val).toEqual({
+        'success': {
+        },
+        'error': {
+          getStatus: 'some problem with status',
+          downloadApp: {},
+          build: {}
+        }
+      })
+      done()
+    })
+  })
 })

@@ -392,6 +392,13 @@ class PGBApi {
           if (result.completed) {
             // Raise flag for completed downloads to pick up
             state.allBuildsFinished = true
+          }
+        }).catch((err) => {
+          state.errorEncountered = true
+          state.allBuildsFinished = true
+          state.returnValue.error.getStatus = err
+        }).finally(() => {
+          if (state.allBuildsFinished) {
             if (state.activeDownloads === 0) {
               resolveOrReject()
             }
@@ -401,11 +408,6 @@ class PGBApi {
             emit('downloads/waiting', {'timeoutID': timeoutID})
           }
         })
-        /* .catch((err) => {
-          state.errorEncountered = true
-          state.allBuildsFinished = true
-          state.returnValue.error.getStatus = err
-        }) */
       }
 
       pollOnce()
