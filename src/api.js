@@ -310,10 +310,13 @@ class PGBApi {
    *  Poll via getStatus for completed platform builds, and download them via downloadApp.
    *  @param {string} id - phonegab build application identifier.
    *  @param {object} saves - map: platform -> save, where save is passed to downloadApp when downloading platform.
+   *  @param {object} opts - configuration options
    *  @return {Promise} - Thenable that executes the poll and download.
    */
-  awaitAndDownloadApps(id, saves) {
-    const pollingIntervalMs = 1000
+  awaitAndDownloadApps(id, saves, opts) {
+    const pollingIntervalMs = (opts && (undefined !== opts.pollingIntervalMs))
+      ? opts.pollingIntervalMs
+      : 1000
 
     let state = {
       allBuildsFinished: false,

@@ -593,7 +593,7 @@ describe('api', () => {
     restClient.get.mockRejectedValueOnce(
       'some problem with status'
     )
-    api.awaitAndDownloadApps(12, {}).catch((val) => {
+    api.awaitAndDownloadApps(12, {}, {pollingIntervalMs: 0}).catch((val) => {
       expect(val).toEqual({
         'success': {
         },
