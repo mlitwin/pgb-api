@@ -346,6 +346,7 @@ class PGBApi {
       }
 
       let pollOnce = () => {
+        emit('downloads/polling', {})
         this.getStatus(id).then((result) => {
           emit('downloads/status', result)
           let status = result.status

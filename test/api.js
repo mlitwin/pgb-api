@@ -457,14 +457,14 @@ describe('api', () => {
   })
 
   describe('downloads', () => {
-    let eventEmitter = new (require('events'))()
-    let api = apiClient({events: eventEmitter})
-
-    eventEmitter.on('downloads/waiting', (evt) => {
-      jest.runOnlyPendingTimers()
-    })
-
     test('awaitAndDownloadApps success', (done) => {
+      let eventEmitter = new (require('events'))()
+      let api = apiClient({events: eventEmitter})
+
+      eventEmitter.on('downloads/waiting', (evt) => {
+        jest.runOnlyPendingTimers()
+      })
+
       restClient.get.mockResolvedValueOnce({
         'completed': false,
         'errors': {},
@@ -587,12 +587,8 @@ describe('api', () => {
   })
 
   test('awaitAndDownloadApps status failure', (done) => {
-    let eventEmitter = new (require('events'))()
-    let api = apiClient({events: eventEmitter})
-
-    eventEmitter.on('downloads/waiting', (evt) => {
-      jest.runOnlyPendingTimers()
-    })
+    // No event emitter to test paths without it
+    // Not required here since we fail early, so no setTimeout to pump
 
     restClient.get.mockRejectedValueOnce(
       'some problem with status'
