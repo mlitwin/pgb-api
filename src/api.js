@@ -367,7 +367,7 @@ class PGBApi {
               }).catch((err) => {
                 state.errorEncountered = true
 
-                state.returnValue.downloadApp[downloadPlatform] = err
+                state.returnValue.error.downloadApp[downloadPlatform] = err
                 emit('downloads/error', {
                   'platform': downloadPlatform,
                   'error': err

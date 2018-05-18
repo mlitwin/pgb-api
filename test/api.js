@@ -544,4 +544,45 @@ describe('api', () => {
       done()
     })
   })
+
+  test('awaitAndDownloadApps download failure', (done) => {
+    let eventEmitter = new (require('events'))()
+    let api = apiClient({events: eventEmitter})
+
+    eventEmitter.on('downloads/waiting', (evt) => {
+      jest.runOnlyPendingTimers()
+    })
+
+    restClient.get.mockResolvedValueOnce({
+      'completed': false,
+      'error': {},
+      'status': {
+        'ios': 'pending',
+        'android': 'complete',
+        'winphone': 'skipped'
+      }
+    }).mockRejectedValueOnce(
+      'android'
+    ).mockResolvedValueOnce({
+      'completed': true,
+      'error': {'ios': 'ios_failure'},
+      'status': {
+        'ios': 'error',
+        'android': 'complete',
+        'winphone': 'skipped'
+      }
+    })
+    api.awaitAndDownloadApps(12, {}).catch((val) => {
+      expect(val).toEqual({
+        'success': {
+        },
+        'error': {
+          getStatus: null,
+          downloadApp: {'android': 'android'},
+          build: {'ios': 'ios_failure'}
+        }
+      })
+      done()
+    })
+  })
 })
