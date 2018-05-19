@@ -357,11 +357,10 @@ class PGBApi {
             // The first time we see a complete build, start to download it.
             if (!state.buildFinished[platform] && status[platform] === 'complete') {
               const downloadPlatform = platform // closure
-              emit('downloads/starting', downloadPlatform)
-
               state.buildFinished[downloadPlatform] = true
-              state.activeDownloads++
 
+              state.activeDownloads++
+              emit('downloads/starting', downloadPlatform)
               this.downloadApp(id, downloadPlatform, saves && saves[downloadPlatform]).then((ret) => {
                 state.returnValue.success[downloadPlatform] = ret
                 emit('downloads/sucess', {
@@ -387,9 +386,7 @@ class PGBApi {
               state.buildFinished[platform] = true
               state.errorEncountered = true
               state.returnValue.error.build[platform] = result.error[platform]
-              let errorEvent = {}
-              errorEvent[platform] = result.error[platform]
-              emit('downloads/buildError', errorEvent)
+              emit('downloads/buildError', {[platform]: result.error[platform]})
             }
           }
 
