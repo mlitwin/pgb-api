@@ -503,6 +503,7 @@ describe('api', () => {
     }
     )
   })
+
   test('awaitAndDownloadApps build failure', (done) => {
     let eventEmitter = new (require('events'))()
     let api = apiClient({events: eventEmitter})
@@ -588,7 +589,8 @@ describe('api', () => {
 
   test('awaitAndDownloadApps status failure', (done) => {
     // No event emitter to test paths without it
-    // Not required here since we fail early, so no setTimeout to pump
+    // Not required here since we fail early, so no setTimeout which we need to pump
+    // in response to events
 
     restClient.get.mockRejectedValueOnce(
       'some problem with status'
