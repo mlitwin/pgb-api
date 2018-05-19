@@ -46,11 +46,6 @@ describe('#get', () => {
       .then((response) => expect(response).toBe('A page'))
   )
 
-  test('should follow absolute redirect with unicode in path', () =>
-    restClient.get('http://localhost:3000/absolute_redirect_unicode')
-      .then((response) => expect(response).toBe('A page with a unicode name'))
-  )
-
   test('should follow relative redirect', () =>
     restClient.get('http://localhost:3000/relative_redirect')
       .then((response) => expect(response).toBe('A page'))
